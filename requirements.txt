@@ -1,0 +1,13 @@
+# Donovan-Codes : Pinning Web Framework, WSGI Server, Metrics, and Test Dependencies
+
+# Web framework
+Flask==3.0.3
+
+# Production WSGI server — replaces Flask's dev server in the container
+gunicorn==22.0.0
+
+# Exposes /metrics for Prometheus scraping
+prometheus-flask-exporter==0.23.1
+
+# Testing
+pytest==8.2.2
