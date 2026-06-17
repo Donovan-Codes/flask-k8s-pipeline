@@ -1,0 +1,57 @@
+# Donovan-Codes : Defining the CI Pipeline Run on Pushes and PRs to Main
+name: CI
+
+# Donovan-Codes : Triggering the Workflow on Pushes and Pull Requests Targeting Main
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ---------------------------------------------------------------
+  # Donovan-Codes : Job 1 — Test (The Quality Gate)
+  # ---------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Donovan-Codes : Checking Out the Repository Into the Runner
+      - uses: actions/checkout@v4
+
+      # Donovan-Codes : Installing the Python Version the App Targets
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Donovan-Codes : Installing Application and Test Dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Donovan-Codes : Running Pytest as the Quality Gate That Fails the Build on Test Failure
+      - name: Run tests
+        run: pytest -v
+
+  # ---------------------------------------------------------------
+  # Donovan-Codes : Job 2 — Build and Scan (Proves Clean Build, Security Gate)
+  # ---------------------------------------------------------------
+  build-and-scan:
+    runs-on: ubuntu-latest
+    # Donovan-Codes : Building Only After Tests Pass — No Point Scanning a Broken Build
+    needs: test
+    steps:
+      # Donovan-Codes : Checking Out the Repository Into the Runner
+      - uses: actions/checkout@v4
+
+      # Donovan-Codes : Building the Docker Image Tagged With the Commit SHA
+      - name: Build Docker image
+        run: docker build -t flask-k8s-pipeline:${{ github.sha }} .
+
+      # Donovan-Codes : Scanning the Image With Trivy and Failing on HIGH or CRITICAL CVEs
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: flask-k8s-pipeline:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
