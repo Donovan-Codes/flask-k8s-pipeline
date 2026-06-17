@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------
+# Donovan-Codes : Declaring the Deployment Desired State for Self-Healing Pods
+# ---------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Donovan-Codes : Naming and Labelling the Deployment
+  name: flask-k8s-pipeline
+  labels:
+    app: flask-k8s-pipeline
+spec:
+  # Donovan-Codes : Running Two Replicas for Load Distribution and Rolling Updates
+  replicas: 2
+
+  # Donovan-Codes : Matching Pods the Deployment Controller Manages
+  selector:
+    matchLabels:
+      app: flask-k8s-pipeline
+
+  template:
+    metadata:
+      # Donovan-Codes : Labelling Pods So the Selector and Service Discover Them
+      labels:
+        app: flask-k8s-pipeline
+    spec:
+      containers:
+        # Donovan-Codes : Defining the Application Container From the Local minikube Image
+        - name: flask-k8s-pipeline
+          image: flask-k8s-pipeline:1.0.0
+
+          # Donovan-Codes : Forcing Use of the Locally Built Image and Never Pulling From a Registry
+          imagePullPolicy: Never
+
+          # Donovan-Codes : Exposing the Container Port Gunicorn Listens On
+          ports:
+            - containerPort: 8000
+
+          # Donovan-Codes : Gating Traffic Until the Pod Reports Ready via /health
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          # Donovan-Codes : Restarting the Container Automatically if /health Stops Responding
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+          # Donovan-Codes : Setting Resource Requests and Limits for Scheduling and Throttling Hygiene
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"

@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------
+# Donovan-Codes : Exposing the Pods Behind a Stable Load-Balanced Service
+# ---------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  # Donovan-Codes : Naming the Service
+  name: flask-k8s-pipeline
+spec:
+  # Donovan-Codes : Using NodePort So the Service Is Reachable From the Mac via minikube
+  type: NodePort
+
+  # Donovan-Codes : Routing to Every Pod Carrying the Deployment Label
+  selector:
+    app: flask-k8s-pipeline
+
+  ports:
+    # Donovan-Codes : Mapping the In-Cluster Service Port to the Gunicorn Container Port
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
